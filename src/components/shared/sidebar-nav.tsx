@@ -9,7 +9,7 @@ import {
   LogOut,
   User,
 } from "lucide-react"
-import { ThemeToggle } from "./theme-toggle"
+import { Logo } from "@/components/brand/logo"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import type { UserRole } from "@/types"
@@ -40,9 +40,7 @@ export function SidebarNav({ role }: { role: UserRole }) {
   return (
     <nav className="flex flex-col h-full">
       <div className="p-4 border-b">
-        <Link href="/" className="text-lg font-bold">
-          Cursos App
-        </Link>
+        <Logo />
       </div>
       <div className="flex-1 p-3 space-y-1">
         {links.map((link) => {
@@ -64,10 +62,6 @@ export function SidebarNav({ role }: { role: UserRole }) {
         })}
       </div>
       <div className="p-3 border-t space-y-1">
-        <div className="flex items-center justify-between px-3 py-1">
-          <span className="text-xs text-muted-foreground">Tema</span>
-          <ThemeToggle />
-        </div>
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"

@@ -1,17 +1,16 @@
-import { CheckCircle } from "lucide-react"
-
 export function LandingOutcomes({ outcomes }: { outcomes: string[] }) {
   return (
-    <section className="py-16 px-4 bg-muted/50">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold mb-8 text-center">
-          Lo que vas a aprender
+    <section className="py-20 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-xs font-mono text-primary mb-4">/ LO QUE VAS A APRENDER</div>
+        <h2 className="font-display text-4xl md:text-5xl leading-[0.9] tracking-tightest mb-12">
+          Al terminar este curso vas a poder:
         </h2>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {outcomes.map((outcome, idx) => (
-            <div key={idx} className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-              <span>{outcome}</span>
+            <div key={idx} className="bg-card border border-border rounded-2xl p-6 hover:border-primary/50 transition-colors">
+              <div className="text-xs font-mono text-primary mb-3">[OUTCOME]</div>
+              <p className="text-foreground">{outcome}</p>
             </div>
           ))}
         </div>

@@ -24,28 +24,35 @@ export function LandingPricing({
   const installmentPrice = Math.ceil(priceArs / installmentsMax)
 
   return (
-    <section id="comprar" className="py-16 px-4">
+    <section id="comprar" className="py-20 px-6">
       <div className="max-w-md mx-auto">
-        <Card className="border-2 border-primary">
+        <Card className="border-2 border-primary rounded-3xl lime-glow overflow-hidden">
           <CardContent className="pt-8 pb-8 text-center">
-            <Badge className="mb-4">Acceso de por vida</Badge>
+            <Badge className="mb-6 font-mono text-xs">ACCESO DE POR VIDA</Badge>
 
             <div className="mb-2">
-              <span className="text-4xl font-bold">
+              <span className="font-display text-5xl tabular-nums">
                 ${priceArs.toLocaleString("es-AR")}
               </span>
-              <span className="text-muted-foreground ml-1">ARS</span>
+              <span className="text-muted-foreground ml-2 text-sm">ARS</span>
             </div>
 
-            <p className="text-muted-foreground mb-1">
-              o {installmentsMax} cuotas sin interés de{" "}
-              <span className="font-semibold text-foreground">
-                ${installmentPrice.toLocaleString("es-AR")}
-              </span>
+            <p className="text-muted-foreground text-sm mb-2">
+              o <span className="text-primary font-semibold">{installmentsMax} cuotas sin interés</span> de
+            </p>
+            <p className="font-display text-2xl mb-2">
+              ${installmentPrice.toLocaleString("es-AR")}
             </p>
 
+            {/* Installment bars */}
+            <div className="grid grid-cols-6 gap-1.5 my-6 px-4">
+              {Array.from({ length: installmentsMax }).map((_, i) => (
+                <div key={i} className={`h-2 rounded-full ${i < 3 ? "bg-primary" : "bg-primary/40"}`} />
+              ))}
+            </div>
+
             {priceUsd && (
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-xs text-muted-foreground mb-6">
                 (USD ${priceUsd.toLocaleString("en-US")})
               </p>
             )}
@@ -60,6 +67,8 @@ export function LandingPricing({
                 slug={slug}
               />
             </div>
+
+            <p className="text-xs font-mono text-muted-foreground mt-4">PAGO SEGURO · MERCADO PAGO</p>
           </CardContent>
         </Card>
       </div>

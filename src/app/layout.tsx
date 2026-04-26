@@ -1,24 +1,29 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const grotesk = Space_Grotesk({
   subsets: ["latin"],
+  variable: "--font-display",
+})
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 })
 
 export const metadata: Metadata = {
   title: {
-    default: "Cursos App",
-    template: "%s | Cursos App",
+    default: "esqala — Vendé tus cursos online",
+    template: "%s | esqala",
   },
-  description: "Plataforma de cursos online con pagos locales",
+  description: "Plataforma de venta de cursos online con pagos locales. Mercado Pago con cuotas, landing optimizada, 12% comisión.",
 }
 
 export default function RootLayout({
@@ -29,22 +34,8 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
+      className={`dark ${inter.variable} ${grotesk.variable} ${mono.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark')
-                }
-              } catch(e) {}
-            `,
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />

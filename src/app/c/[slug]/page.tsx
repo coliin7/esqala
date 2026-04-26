@@ -9,6 +9,7 @@ import { LandingTestimonials } from "@/components/landing/testimonials"
 import { LandingCreator } from "@/components/landing/creator"
 import { LandingPricing } from "@/components/landing/pricing"
 import { LandingFooter } from "@/components/landing/footer"
+import { LandingNavbar } from "@/components/landing/navbar"
 import { StickyCTA } from "@/components/landing/sticky-cta"
 import type { Course, CourseModule, Lesson, Testimonial, Profile } from "@/types"
 
@@ -109,6 +110,7 @@ export default async function CourseLandingPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="min-h-screen bg-background">
+        <LandingNavbar ctaText={typedCourse.cta_text} />
         <LandingHero
           headline={typedCourse.headline || typedCourse.title}
           subheadline={typedCourse.subheadline || ""}
@@ -129,10 +131,12 @@ export default async function CourseLandingPage({ params }: PageProps) {
         )}
 
         {typedCourse.description_long && (
-          <section className="py-16 px-4 max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6">Sobre el curso</h2>
-            <div className="prose prose-lg max-w-none text-muted-foreground whitespace-pre-wrap">
-              {typedCourse.description_long}
+          <section className="py-20 px-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-xs font-mono text-primary mb-4">/ SOBRE EL CURSO</div>
+              <div className="max-w-3xl text-lg text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {typedCourse.description_long}
+              </div>
             </div>
           </section>
         )}

@@ -15,7 +15,6 @@ export function StickyCTA({ priceArs, installmentsMax, ctaText }: StickyCTAProps
 
   useEffect(() => {
     function handleScroll() {
-      // Show after scrolling 400px
       setVisible(window.scrollY > 400)
     }
     window.addEventListener("scroll", handleScroll, { passive: true })
@@ -25,15 +24,15 @@ export function StickyCTA({ priceArs, installmentsMax, ctaText }: StickyCTAProps
   if (!visible) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur p-3 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur p-3 md:hidden">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm">
-          <span className="font-bold">${priceArs.toLocaleString("es-AR")}</span>
-          <span className="text-muted-foreground block text-xs">
+        <div>
+          <span className="font-display text-lg">${priceArs.toLocaleString("es-AR")}</span>
+          <span className="text-muted-foreground block text-xs font-mono">
             {installmentsMax}x ${installmentPrice.toLocaleString("es-AR")}
           </span>
         </div>
-        <Button size="lg" className="px-6" render={<a href="#comprar" />}>
+        <Button className="rounded-full px-6" render={<a href="#comprar" />}>
           {ctaText}
         </Button>
       </div>
