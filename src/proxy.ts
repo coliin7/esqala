@@ -62,12 +62,17 @@ export async function proxy(request: NextRequest) {
     .eq("id", user.id)
     .single()
 
+  // If no profile exists yet (e.g. OAuth race condition), let them through
+  if (!profile) {
+    return supabaseResponse
+  }
+
   // Role-based route protection
-  if (pathname.startsWith("/creador") && profile?.role !== "creator") {
+  if (pathname.startsWith("/creador") && profile.role !== "creator") {
     return NextResponse.redirect(new URL("/alumno/cursos", request.url))
   }
 
-  if (pathname.startsWith("/alumno") && profile?.role !== "student") {
+  if (pathname.startsWith("/alumno") && profile.role !== "student") {
     return NextResponse.redirect(new URL("/creador/cursos", request.url))
   }
 
