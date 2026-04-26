@@ -105,7 +105,7 @@ export default async function HomePage() {
               <div className="text-xs font-mono text-muted-foreground mt-2">CURSOS · ALUMNOS · ANCHO DE BANDA</div>
             </div>
             <div>
-              <div className="font-display text-4xl md:text-5xl tabular-nums">48<span className="text-primary">h</span></div>
+              <div className="font-display text-4xl md:text-5xl tabular-nums">1<span className="text-primary">h</span></div>
               <div className="text-xs font-mono text-muted-foreground mt-2">HASTA TENER TU PRIMERA LANDING ARMADA</div>
             </div>
           </div>
