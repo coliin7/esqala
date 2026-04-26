@@ -6,12 +6,22 @@ import { Button } from "@/components/ui/button"
 export function GoogleAuthButton({ mode = "login" }: { mode?: "login" | "register" }) {
   async function handleGoogle() {
     const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+
+    if (error) {
+      alert(`Error Google OAuth: ${error.message}`)
+      return
+    }
+
+    // If no redirect happened automatically, go to the URL manually
+    if (data?.url) {
+      window.location.href = data.url
+    }
   }
 
   return (
