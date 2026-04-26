@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 
 export default function RegistroPage() {
   const router = useRouter()
@@ -55,6 +56,15 @@ export default function RegistroPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <GoogleAuthButton mode="register" />
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">o con email</span>
+            </div>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="displayName">Nombre</Label>
