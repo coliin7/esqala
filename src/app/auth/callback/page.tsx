@@ -13,42 +13,56 @@ export default function AuthCallbackPage() {
     async function handleCallback() {
       const supabase = createClient()
 
-      // The hash fragment contains the tokens from implicit flow
-      // Supabase client auto-detects and processes them
-      // We just need to wait and check for the session
+      // Parse hash fragment manually if present
+      const hash = window.location.hash
+      if (hash) {
+        const params = new URLSearchParams(hash.substring(1))
+        const accessToken = params.get("access_token")
+        const refreshToken = params.get("refresh_token")
 
-      let attempts = 0
-      const maxAttempts = 10
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
 
-      const check = async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session.user.id)
-            .single()
-
-          if (profile?.role === "creator") {
-            router.push("/creador/cursos")
-          } else {
-            router.push("/alumno/cursos")
+          if (error) {
+            setError(error.message)
+            return
           }
-          router.refresh()
-          return
-        }
-
-        attempts++
-        if (attempts < maxAttempts) {
-          setTimeout(check, 500)
-        } else {
-          setError("No se pudo establecer la sesión. Intentá de nuevo.")
         }
       }
 
-      // Give the client a moment to process the hash
-      setTimeout(check, 500)
+      // Check for code in query params (PKCE flow)
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get("code")
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          setError(error.message)
+          return
+        }
+      }
+
+      // Now check session
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+
+        if (profile?.role === "creator") {
+          router.push("/creador/cursos")
+        } else {
+          router.push("/alumno/cursos")
+        }
+        router.refresh()
+      } else {
+        setError("No se pudo establecer la sesión.")
+      }
     }
 
     handleCallback()
