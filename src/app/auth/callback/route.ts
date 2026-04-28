@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import type { CookieOptions } from "@supabase/ssr"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -12,8 +13,8 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Use a collector response to capture cookies set by Supabase
-  const collector = NextResponse.next()
+  // Collect cookies that Supabase wants to set, then apply them to the final redirect
+  const pendingCookies: Array<{ name: string; value: string; options: CookieOptions }> = []
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            collector.cookies.set(name, value, options)
+            pendingCookies.push({ name, value, options })
           })
         },
       },
@@ -59,10 +60,12 @@ export async function GET(request: NextRequest) {
   const dest =
     profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos"
 
-  // Create the final redirect and copy all Set-Cookie headers from the collector
   const redirectResponse = NextResponse.redirect(new URL(dest, origin))
-  collector.headers.getSetCookie().forEach((cookie) => {
-    redirectResponse.headers.append("Set-Cookie", cookie)
+
+  // Apply all auth cookies to the redirect response
+  pendingCookies.forEach(({ name, value, options }) => {
+    redirectResponse.cookies.set(name, value, options)
   })
+
   return redirectResponse
 }
