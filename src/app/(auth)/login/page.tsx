@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -13,13 +13,11 @@ import { Loader2 } from "lucide-react"
 import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get("returnUrl")
   const [loading, setLoading] = useState(false)
   const [checkingOAuth, setCheckingOAuth] = useState(true)
 
-  // Check if we're returning from OAuth with hash tokens
   useEffect(() => {
     async function checkOAuthReturn() {
       const hash = window.location.hash
@@ -28,53 +26,54 @@ function LoginForm() {
         return
       }
 
-      // Parse tokens from hash
       const params = new URLSearchParams(hash.substring(1))
       const accessToken = params.get("access_token")
       const refreshToken = params.get("refresh_token")
 
-      if (accessToken && refreshToken) {
-        const supabase = createClient()
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        })
+      if (!accessToken || !refreshToken) {
+        setCheckingOAuth(false)
+        window.history.replaceState(null, "", window.location.pathname)
+        return
+      }
 
-        if (error) {
-          toast.error("Error al autenticar: " + error.message)
-          setCheckingOAuth(false)
-          // Clean the hash
-          window.history.replaceState(null, "", window.location.pathname)
-          return
-        }
+      const supabase = createClient()
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
 
-        // Get role and redirect
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single()
+      if (error) {
+        toast.error("Error al autenticar: " + error.message)
+        setCheckingOAuth(false)
+        window.history.replaceState(null, "", window.location.pathname)
+        return
+      }
 
-          if (returnUrl) {
-            router.push(returnUrl)
-          } else if (profile?.role === "creator") {
-            router.push("/creador/cursos")
-          } else {
-            router.push("/alumno/cursos")
-          }
-          router.refresh()
-          return
-        }
+      // Clean hash first
+      window.history.replaceState(null, "", window.location.pathname)
+
+      // Hard redirect — this forces a full page reload so the proxy
+      // picks up the new cookies
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single()
+
+        const dest = returnUrl
+          || (profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos")
+
+        window.location.href = dest
+        return
       }
 
       setCheckingOAuth(false)
-      window.history.replaceState(null, "", window.location.pathname)
     }
 
     checkOAuthReturn()
-  }, [router, returnUrl])
+  }, [returnUrl])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -85,10 +84,7 @@ function LoginForm() {
     const password = formData.get("password") as string
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       toast.error(error.message)
@@ -104,16 +100,11 @@ function LoginForm() {
         .eq("id", user.id)
         .single()
 
-      if (returnUrl) {
-        router.push(returnUrl)
-      } else if (profile?.role === "creator") {
-        router.push("/creador/cursos")
-      } else {
-        router.push("/alumno/cursos")
-      }
-    }
+      const dest = returnUrl
+        || (profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos")
 
-    router.refresh()
+      window.location.href = dest
+    }
   }
 
   if (checkingOAuth) {
@@ -148,23 +139,11 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="tu@email.com"
-              required
-            />
+            <Input id="email" name="email" type="email" placeholder="tu@email.com" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              required
-            />
+            <Input id="password" name="password" type="password" placeholder="••••••••" required />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Ingresando..." : "Ingresar"}
