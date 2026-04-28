@@ -14,6 +14,7 @@ import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 function LoginForm() {
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get("returnUrl")
+  const oauthError = searchParams.get("oauth_error")
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -57,6 +58,11 @@ function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {oauthError && (
+          <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            Error OAuth: {oauthError}
+          </div>
+        )}
         <GoogleAuthButton mode="login" />
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
