@@ -36,24 +36,34 @@ function LoginForm() {
         return
       }
 
-      const supabase = createClient()
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
+      // Set session via server endpoint so cookies are set properly
+      const res = await fetch("/api/auth/set-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }),
       })
 
-      if (error) {
-        toast.error("Error al autenticar: " + error.message)
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error("Error al autenticar: " + (err.error || "desconocido"))
         setCheckingOAuth(false)
         window.history.replaceState(null, "", window.location.pathname)
         return
       }
 
-      // Clean hash first
+      // Also set on the browser client
+      const supabase = createClient()
+      await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
       window.history.replaceState(null, "", window.location.pathname)
 
-      // Hard redirect — this forces a full page reload so the proxy
-      // picks up the new cookies
+      // Get role and redirect
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase

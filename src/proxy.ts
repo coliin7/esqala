@@ -35,6 +35,7 @@ export async function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/c/") ||
     pathname.startsWith("/api/webhooks") ||
+    pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname === "/" ||
     pathname === "/login" ||
