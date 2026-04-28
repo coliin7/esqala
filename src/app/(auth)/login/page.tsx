@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState, useEffect } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -9,81 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
 import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 
 function LoginForm() {
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get("returnUrl")
   const [loading, setLoading] = useState(false)
-  const [checkingOAuth, setCheckingOAuth] = useState(true)
-
-  useEffect(() => {
-    async function checkOAuthReturn() {
-      const hash = window.location.hash
-      if (!hash || !hash.includes("access_token")) {
-        setCheckingOAuth(false)
-        return
-      }
-
-      const params = new URLSearchParams(hash.substring(1))
-      const accessToken = params.get("access_token")
-      const refreshToken = params.get("refresh_token")
-
-      if (!accessToken || !refreshToken) {
-        setCheckingOAuth(false)
-        window.history.replaceState(null, "", window.location.pathname)
-        return
-      }
-
-      // Set session via server endpoint so cookies are set properly
-      const res = await fetch("/api/auth/set-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        }),
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        toast.error("Error al autenticar: " + (err.error || "desconocido"))
-        setCheckingOAuth(false)
-        window.history.replaceState(null, "", window.location.pathname)
-        return
-      }
-
-      // Also set on the browser client
-      const supabase = createClient()
-      await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-
-      window.history.replaceState(null, "", window.location.pathname)
-
-      // Get role and redirect
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single()
-
-        const dest = returnUrl
-          || (profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos")
-
-        window.location.href = dest
-        return
-      }
-
-      setCheckingOAuth(false)
-    }
-
-    checkOAuthReturn()
-  }, [returnUrl])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -115,17 +46,6 @@ function LoginForm() {
 
       window.location.href = dest
     }
-  }
-
-  if (checkingOAuth) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="py-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-          <p className="text-muted-foreground">Autenticando con Google...</p>
-        </CardContent>
-      </Card>
-    )
   }
 
   return (

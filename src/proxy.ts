@@ -31,6 +31,19 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Authenticated users should not see auth pages — redirect to dashboard
+  if (user && (pathname === "/login" || pathname === "/registro")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    const dest =
+      profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos"
+    return NextResponse.redirect(new URL(dest, request.url))
+  }
+
   // Public routes - no auth required
   if (
     pathname.startsWith("/c/") ||
