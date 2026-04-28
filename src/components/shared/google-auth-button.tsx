@@ -20,6 +20,10 @@ export function GoogleAuthButton({ mode = "login" }: { mode?: "login" | "registe
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: false,
+          queryParams: {
+            prompt: "select_account",
+          },
         },
       })
 

@@ -13,41 +13,42 @@ export default function AuthCallbackPage() {
     async function handleCallback() {
       const supabase = createClient()
 
-      // Check URL for code (PKCE) or hash tokens (implicit)
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get("code")
+      // The hash fragment contains the tokens from implicit flow
+      // Supabase client auto-detects and processes them
+      // We just need to wait and check for the session
 
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (error) {
-          setError(`Code exchange error: ${error.message}`)
+      let attempts = 0
+      const maxAttempts = 10
+
+      const check = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (session) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single()
+
+          if (profile?.role === "creator") {
+            router.push("/creador/cursos")
+          } else {
+            router.push("/alumno/cursos")
+          }
+          router.refresh()
           return
         }
-      }
 
-      // Wait a moment for the client to process hash tokens
-      await new Promise((r) => setTimeout(r, 1000))
-
-      // Check if we have a session now
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (session) {
-        // Get role to redirect properly
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single()
-
-        if (profile?.role === "creator") {
-          router.push("/creador/cursos")
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(check, 500)
         } else {
-          router.push("/alumno/cursos")
+          setError("No se pudo establecer la sesión. Intentá de nuevo.")
         }
-        router.refresh()
-      } else {
-        setError("No se pudo establecer la sesión. Intentá de nuevo.")
       }
+
+      // Give the client a moment to process the hash
+      setTimeout(check, 500)
     }
 
     handleCallback()
