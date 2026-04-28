@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
@@ -14,13 +14,23 @@ export function GoogleAuthButton({ mode = "login" }: { mode?: "login" | "registe
     setError(null)
 
     try {
-      const supabase = createClient()
+      // Use raw supabase-js client (not SSR) to avoid PKCE flow
+      const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            flowType: "implicit",
+            persistSession: true,
+            autoRefreshToken: true,
+          },
+        }
+      )
 
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          skipBrowserRedirect: false,
           queryParams: {
             prompt: "select_account",
           },
@@ -35,9 +45,6 @@ export function GoogleAuthButton({ mode = "login" }: { mode?: "login" | "registe
 
       if (data?.url) {
         window.location.href = data.url
-      } else {
-        setError("No se recibió URL de Google. Verificá que el provider esté habilitado en Supabase.")
-        setLoading(false)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")

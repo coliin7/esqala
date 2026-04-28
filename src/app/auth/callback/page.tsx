@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
@@ -11,47 +12,70 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     async function handleCallback() {
-      const supabase = createClient()
-
-      // Parse hash fragment manually if present
-      const hash = window.location.hash
-      if (hash) {
-        const params = new URLSearchParams(hash.substring(1))
-        const accessToken = params.get("access_token")
-        const refreshToken = params.get("refresh_token")
-
-        if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
-
-          if (error) {
-            setError(error.message)
-            return
-          }
+      // Use raw supabase-js to parse the hash tokens (implicit flow)
+      const rawClient = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            flowType: "implicit",
+            persistSession: true,
+            autoRefreshToken: true,
+          },
         }
+      )
+
+      // The raw client auto-detects hash fragments and sets the session
+      const { data: { session }, error: sessionError } = await rawClient.auth.getSession()
+
+      if (sessionError) {
+        setError(sessionError.message)
+        return
       }
 
-      // Check for code in query params (PKCE flow)
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get("code")
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (error) {
-          setError(error.message)
+      if (!session) {
+        // Try parsing hash manually as fallback
+        const hash = window.location.hash
+        if (hash) {
+          const params = new URLSearchParams(hash.substring(1))
+          const accessToken = params.get("access_token")
+          const refreshToken = params.get("refresh_token")
+
+          if (accessToken && refreshToken) {
+            const { error: setErr } = await rawClient.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+            if (setErr) {
+              setError(setErr.message)
+              return
+            }
+          } else {
+            setError("No se encontraron tokens de autenticación.")
+            return
+          }
+        } else {
+          setError("No se recibió respuesta de Google.")
           return
         }
       }
 
-      // Now check session
-      const { data: { session } } = await supabase.auth.getSession()
+      // Session is set in localStorage by raw client.
+      // Now use the SSR client to also set it in cookies for server-side access.
+      const ssrClient = createClient()
+      const { data: { session: currentSession } } = await rawClient.auth.getSession()
 
-      if (session) {
-        const { data: profile } = await supabase
+      if (currentSession) {
+        await ssrClient.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token,
+        })
+
+        // Get role
+        const { data: profile } = await ssrClient
           .from("profiles")
           .select("role")
-          .eq("id", session.user.id)
+          .eq("id", currentSession.user.id)
           .single()
 
         if (profile?.role === "creator") {
@@ -61,7 +85,7 @@ export default function AuthCallbackPage() {
         }
         router.refresh()
       } else {
-        setError("No se pudo establecer la sesión.")
+        setError("Sesión no encontrada después de autenticar.")
       }
     }
 
