@@ -13,19 +13,17 @@ export default async function PlatformLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/login?e=no_user")
+    redirect("/login")
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role, display_name")
     .eq("id", user.id)
     .maybeSingle()
 
   if (!profile) {
-    const em = profileError?.message ?? "null_no_error"
-    const uid = user.id.substring(0, 8)
-    redirect(`/login?e=no_profile&em=${encodeURIComponent(em)}&uid=${uid}`)
+    redirect("/login")
   }
 
   const role = profile.role as UserRole
