@@ -16,36 +16,16 @@ export default async function PlatformLayout({
     redirect("/login?e=no_user")
   }
 
-  let { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role, display_name")
     .eq("id", user.id)
     .maybeSingle()
 
   if (!profile) {
-    // Profile missing — create it (trigger may have failed on OAuth signup)
-    const displayName =
-      user.user_metadata?.full_name ??
-      user.user_metadata?.name ??
-      user.email?.split("@")[0] ??
-      "Usuario"
-
-    const { data: created } = await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        role: "student",
-        display_name: displayName,
-        email: user.email ?? "",
-      })
-      .select("role, display_name")
-      .maybeSingle()
-
-    profile = created
-  }
-
-  if (!profile) {
-    redirect("/login?e=no_profile")
+    const em = profileError?.message ?? "null_no_error"
+    const uid = user.id.substring(0, 8)
+    redirect(`/login?e=no_profile&em=${encodeURIComponent(em)}&uid=${uid}`)
   }
 
   const role = profile.role as UserRole
