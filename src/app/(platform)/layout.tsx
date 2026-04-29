@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { SidebarNav } from "@/components/shared/sidebar-nav"
 import { Navbar } from "@/components/shared/navbar"
 import type { UserRole } from "@/types"
@@ -13,17 +14,38 @@ export default async function PlatformLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/login?layout_error=no_user")
+    redirect("/login")
   }
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from("profiles")
     .select("role, display_name")
     .eq("id", user.id)
     .single()
 
+  // Profile missing (trigger may have failed on first OAuth login) — create it now
   if (!profile) {
-    redirect(`/login?layout_error=no_profile_for_${user.id.substring(0, 8)}`)
+    const admin = createAdminClient()
+    const { data: created } = await admin
+      .from("profiles")
+      .insert({
+        id: user.id,
+        role: "student",
+        display_name:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.email?.split("@")[0] ??
+          "Usuario",
+        email: user.email ?? "",
+      })
+      .select("role, display_name")
+      .single()
+
+    profile = created
+  }
+
+  if (!profile) {
+    redirect("/login")
   }
 
   const role = profile.role as UserRole
