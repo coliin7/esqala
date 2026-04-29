@@ -100,6 +100,7 @@ export async function updateLesson(
   data: {
     title?: string
     video_bunny_id?: string | null
+    video_drive_id?: string | null
     video_duration_sec?: number | null
     is_free_preview?: boolean
     materials?: { name: string; url: string; type: string }[]

@@ -55,6 +55,7 @@ export interface Lesson {
   title: string
   position: number
   video_bunny_id: string | null
+  video_drive_id: string | null
   video_duration_sec: number | null
   materials: MaterialFile[]
   is_free_preview: boolean

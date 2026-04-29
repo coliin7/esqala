@@ -120,8 +120,10 @@ export default function CursoPlayerPage() {
 
   const bunnyHostname = process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || "iframe.mediadelivery.net"
   const bunnyLibrary = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
-  const bunnyUrl = currentLesson?.video_bunny_id
+  const videoUrl = currentLesson?.video_bunny_id
     ? `https://${bunnyHostname}/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
+    : currentLesson?.video_drive_id
+    ? `https://drive.google.com/file/d/${currentLesson.video_drive_id}/preview`
     : null
 
   function LessonList() {
@@ -208,9 +210,9 @@ export default function CursoPlayerPage() {
           <>
             {/* Video */}
             <div className="aspect-video bg-black shrink-0">
-              {bunnyUrl ? (
+              {videoUrl ? (
                 <iframe
-                  src={bunnyUrl}
+                  src={videoUrl}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

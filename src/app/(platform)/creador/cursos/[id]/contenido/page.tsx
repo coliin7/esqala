@@ -23,6 +23,23 @@ import { Plus, Trash2, GripVertical, Video, FileText, Eye, ChevronDown, ChevronU
 import type { CourseModule, Lesson } from "@/types"
 import Link from "next/link"
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function extractDriveFileId(input: string): string | null {
+  const trimmed = input.trim()
+  // /file/d/FILE_ID/...
+  const byPath = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/)
+  if (byPath) return byPath[1]
+  // ?id=FILE_ID or &id=FILE_ID
+  const byParam = trimmed.match(/[?&]id=([a-zA-Z0-9_-]{10,})/)
+  if (byParam) return byParam[1]
+  // Raw file ID pasted directly
+  if (/^[a-zA-Z0-9_-]{25,}$/.test(trimmed)) return trimmed
+  return null
+}
+
+type VideoSource = "bunny" | "drive"
+
 // ── Expandable lesson row with inline editing ──────────────────────────────
 
 function LessonRow({
@@ -40,21 +57,52 @@ function LessonRow({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [title, setTitle] = useState(lesson.title)
-  const [videoId, setVideoId] = useState(lesson.video_bunny_id || "")
+  const [videoSource, setVideoSource] = useState<VideoSource>(
+    lesson.video_drive_id ? "drive" : "bunny"
+  )
+  const [bunnyId, setBunnyId] = useState(lesson.video_bunny_id || "")
+  const [driveInput, setDriveInput] = useState(
+    lesson.video_drive_id
+      ? `https://drive.google.com/file/d/${lesson.video_drive_id}/view`
+      : ""
+  )
+  const [driveFileId, setDriveFileId] = useState(lesson.video_drive_id || "")
   const [saving, setSaving] = useState(false)
+
+  function handleDriveInputChange(value: string) {
+    setDriveInput(value)
+    setDriveFileId(extractDriveFileId(value) || "")
+  }
 
   async function handleSave() {
     setSaving(true)
-    await onUpdate({ title: title.trim() || lesson.title, video_bunny_id: videoId.trim() || null })
+    const data: Partial<Lesson> = { title: title.trim() || lesson.title }
+    if (videoSource === "bunny") {
+      data.video_bunny_id = bunnyId.trim() || null
+      data.video_drive_id = null
+    } else {
+      data.video_drive_id = driveFileId || null
+      data.video_bunny_id = null
+    }
+    await onUpdate(data)
     setSaving(false)
     setExpanded(false)
   }
 
   function handleCancel() {
     setTitle(lesson.title)
-    setVideoId(lesson.video_bunny_id || "")
+    setVideoSource(lesson.video_drive_id ? "drive" : "bunny")
+    setBunnyId(lesson.video_bunny_id || "")
+    setDriveInput(
+      lesson.video_drive_id
+        ? `https://drive.google.com/file/d/${lesson.video_drive_id}/view`
+        : ""
+    )
+    setDriveFileId(lesson.video_drive_id || "")
     setExpanded(false)
   }
+
+  const hasVideo = lesson.video_bunny_id || lesson.video_drive_id
 
   return (
     <div className="border rounded-md overflow-hidden">
@@ -66,7 +114,7 @@ function LessonRow({
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-sm text-muted-foreground shrink-0 w-5">{index + 1}.</span>
           <span className="text-sm truncate">{lesson.title}</span>
-          {lesson.video_bunny_id && <Video className="h-3 w-3 text-muted-foreground shrink-0" />}
+          {hasVideo && <Video className="h-3 w-3 text-muted-foreground shrink-0" />}
           {lesson.materials && (lesson.materials as unknown[]).length > 0 && (
             <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
           )}
@@ -106,6 +154,7 @@ function LessonRow({
       {/* Expanded edit panel */}
       {expanded && (
         <div className="border-t bg-muted/20 px-3 py-3 space-y-3">
+          {/* Title */}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Título</Label>
             <Input
@@ -116,15 +165,71 @@ function LessonRow({
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
             />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">ID de video (Bunny.net)</Label>
-            <Input
-              value={videoId}
-              onChange={(e) => setVideoId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              className="h-8 text-sm font-mono"
-            />
+
+          {/* Video source toggle */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Fuente del video</Label>
+            <div className="flex gap-1 p-1 bg-muted rounded-md w-fit">
+              <button
+                type="button"
+                onClick={() => setVideoSource("bunny")}
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  videoSource === "bunny"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Bunny.net
+              </button>
+              <button
+                type="button"
+                onClick={() => setVideoSource("drive")}
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  videoSource === "drive"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Google Drive
+              </button>
+            </div>
+
+            {videoSource === "bunny" && (
+              <div className="space-y-1">
+                <Input
+                  value={bunnyId}
+                  onChange={(e) => setBunnyId(e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  className="h-8 text-sm font-mono"
+                />
+              </div>
+            )}
+
+            {videoSource === "drive" && (
+              <div className="space-y-1">
+                <Input
+                  value={driveInput}
+                  onChange={(e) => handleDriveInputChange(e.target.value)}
+                  placeholder="https://drive.google.com/file/d/…/view"
+                  className="h-8 text-sm"
+                />
+                {driveInput && !driveFileId && (
+                  <p className="text-xs text-destructive">
+                    No se pudo extraer el ID del archivo. Asegurate de pegar el enlace completo.
+                  </p>
+                )}
+                {driveFileId && (
+                  <p className="text-xs text-muted-foreground font-mono">
+                    ID: {driveFileId}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  El video debe estar compartido como &ldquo;Cualquier persona con el enlace&rdquo;.
+                </p>
+              </div>
+            )}
           </div>
+
           <div className="flex gap-2 justify-end pt-1">
             <Button size="sm" variant="ghost" onClick={handleCancel}>
               Cancelar
