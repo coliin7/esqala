@@ -14,7 +14,7 @@ import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 function LoginForm() {
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get("returnUrl")
-  const oauthError = searchParams.get("oauth_error")
+  const oauthError = searchParams.get("oauth_error") ?? searchParams.get("layout_error")
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

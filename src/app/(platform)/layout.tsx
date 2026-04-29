@@ -13,7 +13,7 @@ export default async function PlatformLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/login")
+    redirect("/login?layout_error=no_user")
   }
 
   const { data: profile } = await supabase
@@ -23,7 +23,7 @@ export default async function PlatformLayout({
     .single()
 
   if (!profile) {
-    redirect("/login")
+    redirect(`/login?layout_error=no_profile_for_${user.id.substring(0, 8)}`)
   }
 
   const role = profile.role as UserRole
