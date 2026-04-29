@@ -12,6 +12,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { ExternalLink, Trash2 } from "lucide-react"
 import type { Course } from "@/types"
@@ -24,6 +33,8 @@ export default function EditCoursePage() {
   const [saving, setSaving] = useState(false)
   const [slugValue, setSlugValue] = useState("")
   const [savingSlug, setSavingSlug] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -69,8 +80,10 @@ export default function EditCoursePage() {
   }
 
   async function handleDelete() {
-    if (!confirm("¿Estás seguro de eliminar este curso? Esta acción no se puede deshacer.")) return
+    setDeleting(true)
     await deleteCourse(id)
+    setDeleting(false)
+    setShowDeleteDialog(false)
   }
 
   return (
@@ -98,7 +111,7 @@ export default function EditCoursePage() {
           <Button variant="outline" onClick={handlePublish}>
             {course.status === "published" ? "Despublicar" : "Publicar"}
           </Button>
-          <Button variant="destructive" size="icon" onClick={handleDelete}>
+          <Button variant="destructive" size="icon" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -204,6 +217,25 @@ export default function EditCoursePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={(open: boolean) => setShowDeleteDialog(open)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar este curso?</DialogTitle>
+            <DialogDescription>
+              <span className="font-medium">&ldquo;{course.title}&rdquo;</span> será eliminado
+              permanentemente junto a todo su contenido. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Eliminando..." : "Eliminar curso"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

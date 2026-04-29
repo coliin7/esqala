@@ -12,8 +12,115 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { Plus, Trash2, ExternalLink, Star } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Star, GripVertical } from "lucide-react"
 import type { Course, Testimonial } from "@/types"
+
+// ── Reusable editable list ─────────────────────────────────────────────────
+
+function EditableList({
+  items,
+  onChange,
+  placeholder,
+}: {
+  items: string[]
+  onChange: (items: string[]) => void
+  placeholder: string
+}) {
+  const [newItem, setNewItem] = useState("")
+  const [editingIdx, setEditingIdx] = useState<number | null>(null)
+  const [editingValue, setEditingValue] = useState("")
+
+  function addItem() {
+    const trimmed = newItem.trim()
+    if (!trimmed) return
+    onChange([...items, trimmed])
+    setNewItem("")
+  }
+
+  function removeItem(idx: number) {
+    onChange(items.filter((_, i) => i !== idx))
+  }
+
+  function startEdit(idx: number) {
+    setEditingIdx(idx)
+    setEditingValue(items[idx])
+  }
+
+  function saveEdit() {
+    if (editingIdx === null) return
+    const trimmed = editingValue.trim()
+    if (!trimmed) {
+      removeItem(editingIdx)
+    } else {
+      const updated = [...items]
+      updated[editingIdx] = trimmed
+      onChange(updated)
+    }
+    setEditingIdx(null)
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          className="flex items-center gap-2 border rounded-md px-3 py-2"
+        >
+          <GripVertical className="h-3 w-3 text-muted-foreground shrink-0" />
+          {editingIdx === idx ? (
+            <Input
+              autoFocus
+              value={editingValue}
+              onChange={(e) => setEditingValue(e.target.value)}
+              onBlur={saveEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveEdit()
+                if (e.key === "Escape") setEditingIdx(null)
+              }}
+              className="h-7 text-sm border-0 shadow-none p-0 focus-visible:ring-0 flex-1"
+            />
+          ) : (
+            <span
+              className="text-sm flex-1 cursor-text"
+              onClick={() => startEdit(idx)}
+              title="Clic para editar"
+            >
+              {item}
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={() => removeItem(idx)}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      ))}
+      <div className="flex gap-2 pt-1">
+        <Input
+          placeholder={placeholder}
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addItem()}
+          className="h-8 text-sm"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={addItem}
+          disabled={!newItem.trim()}
+          className="shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ──────────────────────────────────────────────────────────────
 
 export default function LandingEditorPage() {
   const { id: courseId } = useParams<{ id: string }>()
@@ -100,22 +207,6 @@ export default function LandingEditorPage() {
     else loadData()
   }
 
-  function addListItem(
-    list: string[],
-    setter: (items: string[]) => void
-  ) {
-    const item = prompt("Agregar ítem:")
-    if (item) setter([...list, item])
-  }
-
-  function removeListItem(
-    list: string[],
-    index: number,
-    setter: (items: string[]) => void
-  ) {
-    setter(list.filter((_, i) => i !== index))
-  }
-
   if (loading) return <div className="text-muted-foreground">Cargando...</div>
   if (!course) return <div className="text-destructive">Curso no encontrado</div>
 
@@ -125,7 +216,10 @@ export default function LandingEditorPage() {
         <h1 className="text-2xl font-bold">Editor de landing</h1>
         <div className="flex gap-2">
           {course.status === "published" && (
-            <Button variant="outline" render={<Link href={`/c/${course.slug}`} target="_blank" />}>
+            <Button
+              variant="outline"
+              render={<Link href={`/c/${course.slug}`} target="_blank" />}
+            >
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver landing
             </Button>
@@ -191,76 +285,28 @@ export default function LandingEditorPage() {
         {/* Learning Outcomes */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Lo que vas a aprender</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => addListItem(learningOutcomes, setLearningOutcomes)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar
-              </Button>
-            </div>
+            <CardTitle>Lo que vas a aprender</CardTitle>
           </CardHeader>
           <CardContent>
-            {learningOutcomes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin ítems</p>
-            ) : (
-              <ul className="space-y-2">
-                {learningOutcomes.map((item, idx) => (
-                  <li key={idx} className="flex items-center justify-between border rounded-md px-3 py-2">
-                    <span className="text-sm">{item}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => removeListItem(learningOutcomes, idx, setLearningOutcomes)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <EditableList
+              items={learningOutcomes}
+              onChange={setLearningOutcomes}
+              placeholder="Ej: Dominar los fundamentos de..."
+            />
           </CardContent>
         </Card>
 
         {/* Target Audience */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Para quién es</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => addListItem(targetAudience, setTargetAudience)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar
-              </Button>
-            </div>
+            <CardTitle>Para quién es</CardTitle>
           </CardHeader>
           <CardContent>
-            {targetAudience.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin ítems</p>
-            ) : (
-              <ul className="space-y-2">
-                {targetAudience.map((item, idx) => (
-                  <li key={idx} className="flex items-center justify-between border rounded-md px-3 py-2">
-                    <span className="text-sm">{item}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => removeListItem(targetAudience, idx, setTargetAudience)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <EditableList
+              items={targetAudience}
+              onChange={setTargetAudience}
+              placeholder="Ej: Personas que quieran iniciar en..."
+            />
           </CardContent>
         </Card>
 
@@ -286,7 +332,7 @@ export default function LandingEditorPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-6 w-6 shrink-0"
                   onClick={() => handleDeleteTestimonial(t.id)}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -299,7 +345,14 @@ export default function LandingEditorPage() {
             <form onSubmit={handleAddTestimonial} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <Input name="author_name" placeholder="Nombre" required />
-                <Input name="rating" type="number" min="1" max="5" defaultValue="5" placeholder="Rating (1-5)" />
+                <Input
+                  name="rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  defaultValue="5"
+                  placeholder="Rating (1-5)"
+                />
               </div>
               <Textarea name="content" placeholder="Testimonio..." required rows={2} />
               <Button type="submit" variant="outline" size="sm">

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 import { LandingHero } from "@/components/landing/hero"
 import { LandingOutcomes } from "@/components/landing/outcomes"
 import { LandingAudience } from "@/components/landing/audience"
@@ -21,7 +21,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const supabase = createAdminClient()
+  const supabase = await createClient()
 
   const { data: course } = await supabase
     .from("courses")
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CourseLandingPage({ params }: PageProps) {
   const { slug } = await params
-  const supabase = createAdminClient()
+  const supabase = await createClient()
 
   const { data: course } = await supabase
     .from("courses")
