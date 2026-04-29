@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -16,6 +16,15 @@ function LoginForm() {
   const returnUrl = searchParams.get("returnUrl")
   const oauthError = searchParams.get("oauth_error") ?? searchParams.get("layout_error")
   const [loading, setLoading] = useState(false)
+
+  // Fallback: if Supabase redirected here with ?code= instead of /auth/callback,
+  // forward to the real callback handler
+  useEffect(() => {
+    const code = searchParams.get("code")
+    if (code) {
+      window.location.href = `/auth/callback?code=${encodeURIComponent(code)}`
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
