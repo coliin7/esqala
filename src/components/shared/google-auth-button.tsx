@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
@@ -14,15 +14,18 @@ export function GoogleAuthButton({ mode = "login" }: { mode?: "login" | "registe
     setError(null)
 
     try {
-      const supabase = createClient()
+      // Implicit flow: Supabase returns tokens as hash fragment to redirectTo URL
+      const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { flowType: "implicit" } }
+      )
 
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            prompt: "select_account",
-          },
+          queryParams: { prompt: "select_account" },
         },
       })
 

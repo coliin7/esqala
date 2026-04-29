@@ -5,49 +5,49 @@ import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
 export default function AuthCallbackPage() {
-  const [status, setStatus] = useState("Procesando...")
+  const [status, setStatus] = useState("Autenticando...")
 
   useEffect(() => {
     async function handleCallback() {
       const supabase = createClient()
 
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get("code")
+      // Implicit flow: tokens come as hash fragment #access_token=...
       const hash = window.location.hash
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get("access_token")
+      const refreshToken = params.get("refresh_token")
 
-      // Step 1: check what Supabase actually sent us
-      if (!code) {
-        const hasHashTokens = hash.includes("access_token")
+      if (!accessToken || !refreshToken) {
         window.location.href = `/login?oauth_error=${encodeURIComponent(
-          `no_code_in_url | hash_tokens:${hasHashTokens} | search:${window.location.search} | hash:${hash.substring(0, 60)}`
+          `no_tokens_in_hash | hash: ${hash.substring(0, 80)}`
         )}`
         return
       }
 
-      // Step 2: exchange the code
-      setStatus("Intercambiando código con Supabase...")
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      setStatus("Estableciendo sesión...")
 
-      if (exchangeError) {
+      // createBrowserClient stores session in cookies — server can read them
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
+      if (error) {
         window.location.href = `/login?oauth_error=${encodeURIComponent(
-          `exchange_failed: ${exchangeError.message}`
+          `set_session_failed: ${error.message}`
         )}`
         return
       }
 
-      // Step 3: verify user
-      setStatus("Verificando sesión...")
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      setStatus("Obteniendo perfil...")
+
+      const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        window.location.href = `/login?oauth_error=${encodeURIComponent(
-          `no_user_after_exchange: ${userError?.message ?? "unknown"}`
-        )}`
+        window.location.href = "/login?oauth_error=no_user_after_set_session"
         return
       }
 
-      // Step 4: get profile and redirect
-      setStatus("Obteniendo perfil...")
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -57,7 +57,9 @@ export default function AuthCallbackPage() {
       const dest =
         profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos"
 
-      setStatus(`Redirigiendo a ${dest}...`)
+      setStatus(`Redirigiendo...`)
+
+      // Hard redirect so browser sends fresh cookies to the server
       window.location.href = dest
     }
 
