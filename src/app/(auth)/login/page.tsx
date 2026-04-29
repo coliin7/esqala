@@ -14,7 +14,7 @@ import { GoogleAuthButton } from "@/components/shared/google-auth-button"
 function LoginForm() {
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get("returnUrl")
-  const oauthError = searchParams.get("oauth_error") ?? searchParams.get("layout_error")
+  const oauthError = searchParams.get("oauth_error") ?? searchParams.get("layout_error") ?? searchParams.get("error")
   const [loading, setLoading] = useState(false)
 
   // Fallback: if Supabase redirected here with ?code= instead of /auth/callback,

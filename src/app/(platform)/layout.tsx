@@ -17,35 +17,43 @@ export default async function PlatformLayout({
     redirect("/login")
   }
 
-  let { data: profile } = await supabase
+  const admin = createAdminClient()
+
+  // Use admin client to bypass any potential RLS issues
+  let { data: profile } = await admin
     .from("profiles")
     .select("role, display_name")
     .eq("id", user.id)
-    .single()
+    .maybeSingle()
 
-  // Profile missing (trigger may have failed on first OAuth login) — create it now
   if (!profile) {
-    const admin = createAdminClient()
-    const { data: created } = await admin
+    // Profile doesn't exist — create it (trigger may have failed on OAuth signup)
+    const displayName =
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      user.email?.split("@")[0] ??
+      "Usuario"
+
+    const { data: created, error: insertError } = await admin
       .from("profiles")
       .insert({
         id: user.id,
         role: "student",
-        display_name:
-          user.user_metadata?.full_name ??
-          user.user_metadata?.name ??
-          user.email?.split("@")[0] ??
-          "Usuario",
+        display_name: displayName,
         email: user.email ?? "",
       })
       .select("role, display_name")
-      .single()
+      .maybeSingle()
+
+    if (insertError) {
+      redirect(`/login?error=${encodeURIComponent(`insert_failed: ${insertError.message}`)}`)
+    }
 
     profile = created
   }
 
   if (!profile) {
-    redirect("/login")
+    redirect("/login?error=profile_null_after_upsert")
   }
 
   const role = profile.role as UserRole
