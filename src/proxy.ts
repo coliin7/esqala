@@ -41,7 +41,11 @@ export async function proxy(request: NextRequest) {
 
     const dest =
       profile?.role === "creator" ? "/creador/cursos" : "/alumno/cursos"
-    return NextResponse.redirect(new URL(dest, request.url))
+    const authRedirect = NextResponse.redirect(new URL(dest, request.url))
+    supabaseResponse.cookies.getAll().forEach(({ name, value }) =>
+      authRedirect.cookies.set(name, value)
+    )
+    return authRedirect
   }
 
   // Public routes - no auth required
@@ -66,7 +70,11 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     url.searchParams.set("returnUrl", pathname)
-    return NextResponse.redirect(url)
+    const loginRedirect = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(({ name, value }) =>
+      loginRedirect.cookies.set(name, value)
+    )
+    return loginRedirect
   }
 
   // Get user profile to check role
