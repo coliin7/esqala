@@ -138,6 +138,7 @@ export default function LandingEditorPage() {
   const [heroVideoUrl, setHeroVideoUrl] = useState("")
   const [heroVideoSource, setHeroVideoSource] = useState<HeroVideoSource>("url")
   const [heroBunnyId, setHeroBunnyId] = useState<string | null>(null)
+  const [heroVideoVertical, setHeroVideoVertical] = useState(false)
   const [descriptionLong, setDescriptionLong] = useState("")
   const [learningOutcomes, setLearningOutcomes] = useState<string[]>([])
   const [targetAudience, setTargetAudience] = useState<string[]>([])
@@ -172,6 +173,7 @@ export default function LandingEditorPage() {
         setHeroVideoSource("url")
         setHeroBunnyId(null)
       }
+      setHeroVideoVertical(c.hero_video_vertical || false)
       setDescriptionLong(c.description_long || "")
       setLearningOutcomes(c.learning_outcomes || [])
       setTargetAudience(c.target_audience || [])
@@ -193,6 +195,7 @@ export default function LandingEditorPage() {
       headline,
       subheadline,
       hero_video_url: heroVideoUrl,
+      hero_video_vertical: heroVideoVertical,
       description_long: descriptionLong,
       learning_outcomes: learningOutcomes,
       target_audience: targetAudience,
@@ -322,6 +325,35 @@ export default function LandingEditorPage() {
                   </p>
                 </>
               )}
+
+              {/* Orientation */}
+              <div className="flex items-center gap-3 pt-1">
+                <span className="text-xs text-muted-foreground">Orientación:</span>
+                <div className="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setHeroVideoVertical(false)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      !heroVideoVertical
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Horizontal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHeroVideoVertical(true)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      heroVideoVertical
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Vertical
+                  </button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

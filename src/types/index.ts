@@ -25,6 +25,7 @@ export interface Course {
   subheadline: string | null
   description_long: string | null
   hero_video_url: string | null
+  hero_video_vertical: boolean
   learning_outcomes: string[]
   target_audience: string[]
   cta_text: string

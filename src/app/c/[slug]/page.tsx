@@ -125,6 +125,7 @@ export default async function CourseLandingPage({ params }: PageProps) {
           headline={typedCourse.headline || typedCourse.title}
           subheadline={typedCourse.subheadline || ""}
           heroVideoUrl={typedCourse.hero_video_url}
+          heroVideoVertical={typedCourse.hero_video_vertical || false}
           ctaText={typedCourse.cta_text}
           priceArs={typedCourse.price_ars}
           priceCompareArs={typedCourse.price_compare_ars ?? null}

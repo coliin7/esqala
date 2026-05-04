@@ -5,6 +5,7 @@ interface HeroProps {
   headline: string
   subheadline: string
   heroVideoUrl: string | null
+  heroVideoVertical?: boolean
   ctaText: string
   priceArs: number
   priceCompareArs: number | null
@@ -17,6 +18,7 @@ export function LandingHero({
   headline,
   subheadline,
   heroVideoUrl,
+  heroVideoVertical = false,
   ctaText,
   priceArs,
   priceCompareArs,
@@ -29,7 +31,7 @@ export function LandingHero({
       <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[140px] pointer-events-none" />
 
       <div className="relative max-w-6xl mx-auto grid md:grid-cols-12 gap-10 items-center">
-        <div className="md:col-span-6 space-y-6">
+        <div className={`${heroVideoVertical ? "md:col-span-7" : "md:col-span-6"} space-y-6`}>
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -66,9 +68,9 @@ export function LandingHero({
         </div>
 
         {/* Video */}
-        <div className="md:col-span-6">
+        <div className={`${heroVideoVertical ? "md:col-span-5 flex justify-center" : "md:col-span-6"}`}>
           {heroVideoUrl ? (
-            <div className="aspect-video rounded-3xl overflow-hidden border border-border bg-card">
+            <div className={`${heroVideoVertical ? "aspect-[9/16] w-full max-w-xs" : "aspect-video"} rounded-3xl overflow-hidden border border-border bg-card`}>
               <iframe
                 src={heroVideoUrl}
                 className="w-full h-full"
@@ -79,7 +81,7 @@ export function LandingHero({
               />
             </div>
           ) : (
-            <div className="aspect-video rounded-3xl overflow-hidden border border-border bg-card placeholder-stripes relative">
+            <div className={`${heroVideoVertical ? "aspect-[9/16] w-full max-w-xs" : "aspect-video"} rounded-3xl overflow-hidden border border-border bg-card placeholder-stripes relative`}>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-2xl">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-primary-foreground">

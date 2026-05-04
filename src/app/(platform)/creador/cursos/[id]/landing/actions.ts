@@ -8,6 +8,7 @@ export async function updateLanding(courseId: string, data: {
   headline?: string
   subheadline?: string
   hero_video_url?: string
+  hero_video_vertical?: boolean
   description_long?: string
   learning_outcomes?: string[]
   target_audience?: string[]
