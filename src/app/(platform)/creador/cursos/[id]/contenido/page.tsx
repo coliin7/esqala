@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { createModule, deleteModule, createLesson, deleteLesson, updateLesson, updateWelcomeVideo } from "./actions"
+import { createModule, updateModule, deleteModule, createLesson, deleteLesson, updateLesson, updateWelcomeVideo } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -251,6 +251,7 @@ export default function ContenidoPage() {
 
   // Inline lesson-add state: which module is receiving a new lesson
   const [addingLesson, setAddingLesson] = useState<{ moduleId: string; title: string } | null>(null)
+  const [editingModule, setEditingModule] = useState<{ id: string; title: string } | null>(null)
 
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -392,11 +393,43 @@ export default function ContenidoPage() {
             <Card key={module.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">
-                      Módulo {idx + 1}: {module.title}
-                    </CardTitle>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                    {editingModule?.id === module.id ? (
+                      <Input
+                        autoFocus
+                        value={editingModule.title}
+                        onChange={(e) =>
+                          setEditingModule({ ...editingModule, title: e.target.value })
+                        }
+                        className="h-7 text-sm font-semibold"
+                        onKeyDown={async (e) => {
+                          if (e.key === "Enter") {
+                            const fd = new FormData()
+                            fd.set("title", editingModule.title.trim() || module.title)
+                            await updateModule(module.id, fd)
+                            setEditingModule(null)
+                            loadModules()
+                          }
+                          if (e.key === "Escape") setEditingModule(null)
+                        }}
+                        onBlur={async () => {
+                          const fd = new FormData()
+                          fd.set("title", editingModule.title.trim() || module.title)
+                          await updateModule(module.id, fd)
+                          setEditingModule(null)
+                          loadModules()
+                        }}
+                      />
+                    ) : (
+                      <CardTitle
+                        className="text-base cursor-text hover:text-primary transition-colors"
+                        title="Clic para editar"
+                        onClick={() => setEditingModule({ id: module.id, title: module.title })}
+                      >
+                        Módulo {idx + 1}: {module.title}
+                      </CardTitle>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
