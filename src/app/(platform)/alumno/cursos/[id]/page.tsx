@@ -125,13 +125,12 @@ export default function CursoPlayerPage() {
     ? Math.round((completedLessons.size / allLessons.length) * 100)
     : 0
 
-  const bunnyHostname = process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || "iframe.mediadelivery.net"
   const bunnyLibrary = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
 
   const videoUrl = showingWelcome && course?.welcome_video_bunny_id
-    ? `https://${bunnyHostname}/embed/${bunnyLibrary}/${course.welcome_video_bunny_id}`
+    ? `https://iframe.mediadelivery.net/embed/${bunnyLibrary}/${course.welcome_video_bunny_id}`
     : currentLesson?.video_bunny_id
-    ? `https://${bunnyHostname}/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
+    ? `https://iframe.mediadelivery.net/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
     : currentLesson?.video_drive_id
     ? `https://drive.google.com/file/d/${currentLesson.video_drive_id}/preview`
     : null

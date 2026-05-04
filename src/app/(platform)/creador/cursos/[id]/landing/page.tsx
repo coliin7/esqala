@@ -304,10 +304,8 @@ export default function LandingEditorPage() {
                   currentVideoId={heroBunnyId}
                   onUploaded={(videoId) => {
                     setHeroBunnyId(videoId)
-                    const hostname =
-                      process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || "iframe.mediadelivery.net"
                     const library = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
-                    setHeroVideoUrl(`https://${hostname}/embed/${library}/${videoId}`)
+                    setHeroVideoUrl(`https://iframe.mediadelivery.net/embed/${library}/${videoId}`)
                   }}
                 />
               )}
