@@ -209,17 +209,22 @@ export default function LandingEditorPage() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const result = await createTestimonial(courseId, formData)
-    if (result.error) toast.error(result.error)
-    else {
+    if (result.error) {
+      toast.error(result.error)
+    } else {
       e.currentTarget.reset()
-      loadData()
+      toast.success("Testimonio agregado")
+      await loadData()
     }
   }
 
   async function handleDeleteTestimonial(id: string) {
     const result = await deleteTestimonial(id)
     if (result.error) toast.error(result.error)
-    else loadData()
+    else {
+      toast.success("Testimonio eliminado")
+      await loadData()
+    }
   }
 
   if (loading) return <div className="text-muted-foreground">Cargando...</div>
