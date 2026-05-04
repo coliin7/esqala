@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { createModule, deleteModule, createLesson, deleteLesson, updateLesson } from "./actions"
+import { createModule, deleteModule, createLesson, deleteLesson, updateLesson, updateWelcomeVideo } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -245,6 +245,7 @@ function LessonRow({
 export default function ContenidoPage() {
   const { id: courseId } = useParams<{ id: string }>()
   const [modules, setModules] = useState<(CourseModule & { lessons: Lesson[] })[]>([])
+  const [welcomeVideoId, setWelcomeVideoId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [newModuleTitle, setNewModuleTitle] = useState("")
 
@@ -261,14 +262,22 @@ export default function ContenidoPage() {
 
   const loadModules = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase
-      .from("course_modules")
-      .select("*, lessons(*)")
-      .eq("course_id", courseId)
-      .order("position")
-      .order("position", { referencedTable: "lessons" })
+    const [modulesRes, courseRes] = await Promise.all([
+      supabase
+        .from("course_modules")
+        .select("*, lessons(*)")
+        .eq("course_id", courseId)
+        .order("position")
+        .order("position", { referencedTable: "lessons" }),
+      supabase
+        .from("courses")
+        .select("welcome_video_bunny_id")
+        .eq("id", courseId)
+        .single(),
+    ])
 
-    setModules((data as (CourseModule & { lessons: Lesson[] })[]) || [])
+    setModules((modulesRes.data as (CourseModule & { lessons: Lesson[] })[]) || [])
+    setWelcomeVideoId(courseRes.data?.welcome_video_bunny_id ?? null)
     setLoading(false)
   }, [courseId])
 
@@ -340,6 +349,45 @@ export default function ContenidoPage() {
         </div>
 
         <div className="space-y-4">
+          {/* Welcome video */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Video de bienvenida</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Se muestra a los alumnos antes del primer módulo. No cuenta como lección.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <VideoUpload
+                lessonId={`welcome-${courseId}`}
+                currentVideoId={welcomeVideoId}
+                onUploaded={async (videoId) => {
+                  setWelcomeVideoId(videoId)
+                  const result = await updateWelcomeVideo(courseId, videoId)
+                  if (result.error) toast.error(result.error)
+                  else toast.success("Video de bienvenida guardado")
+                }}
+              />
+              {welcomeVideoId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-destructive hover:text-destructive"
+                  onClick={async () => {
+                    const result = await updateWelcomeVideo(courseId, null)
+                    if (result.error) toast.error(result.error)
+                    else {
+                      setWelcomeVideoId(null)
+                      toast.success("Video de bienvenida eliminado")
+                    }
+                  }}
+                >
+                  Quitar video
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
           {modules.map((module, idx) => (
             <Card key={module.id}>
               <CardHeader className="pb-3">

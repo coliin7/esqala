@@ -29,8 +29,10 @@ export interface Course {
   target_audience: string[]
   cta_text: string
   price_ars: number
+  price_compare_ars: number | null
   price_usd: number | null
   installments_max: number
+  welcome_video_bunny_id: string | null
   created_at: string
   updated_at: string
   // Joined

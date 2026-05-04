@@ -7,6 +7,7 @@ interface HeroProps {
   heroVideoUrl: string | null
   ctaText: string
   priceArs: number
+  priceCompareArs: number | null
   installmentsMax: number
   courseId: string
   slug: string
@@ -18,6 +19,7 @@ export function LandingHero({
   heroVideoUrl,
   ctaText,
   priceArs,
+  priceCompareArs,
   installmentsMax,
 }: HeroProps) {
   const installmentPrice = Math.ceil(priceArs / installmentsMax)
@@ -50,8 +52,15 @@ export function LandingHero({
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
             <div className="text-sm text-muted-foreground">
-              <span className="block">o {installmentsMax} cuotas sin interés de</span>
-              <span className="font-display text-foreground text-xl">${installmentPrice.toLocaleString("es-AR")}</span>
+              {priceCompareArs && (
+                <span className="block line-through text-muted-foreground/60">
+                  ${priceCompareArs.toLocaleString("es-AR")}
+                </span>
+              )}
+              <span className="font-display text-foreground text-2xl">
+                ${priceArs.toLocaleString("es-AR")}
+              </span>
+              <span className="block mt-0.5">o {installmentsMax} cuotas de ${installmentPrice.toLocaleString("es-AR")}</span>
             </div>
           </div>
         </div>

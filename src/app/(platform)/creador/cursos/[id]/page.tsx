@@ -95,16 +95,14 @@ export default function EditCoursePage() {
             <Badge variant={course.status === "published" ? "default" : "secondary"}>
               {course.status === "published" ? "Publicado" : "Borrador"}
             </Badge>
-            {course.status === "published" && (
-              <Link
-                href={`/c/${course.slug}`}
-                target="_blank"
-                className="text-xs text-primary inline-flex items-center gap-1"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Ver landing
-              </Link>
-            )}
+            <Link
+              href={`/c/${course.slug}`}
+              target="_blank"
+              className="text-xs text-primary inline-flex items-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {course.status === "published" ? "Ver landing" : "Previsualizar"}
+            </Link>
           </div>
         </div>
         <div className="flex gap-2">
@@ -174,6 +172,29 @@ export default function EditCoursePage() {
                       {savingSlug ? "..." : "Guardar"}
                     </Button>
                   </div>
+                  <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
+                    <Link
+                      href={`/c/${course.slug}`}
+                      target="_blank"
+                      className="text-sm text-primary flex-1 truncate hover:underline"
+                    >
+                      {process.env.NEXT_PUBLIC_APP_URL}/c/{course.slug}
+                    </Link>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 text-xs"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${process.env.NEXT_PUBLIC_APP_URL}/c/${course.slug}`
+                        )
+                        toast.success("URL copiada")
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Descripción</Label>
@@ -198,16 +219,28 @@ export default function EditCoursePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price_usd">Precio USD</Label>
+                    <Label htmlFor="price_compare_ars">Precio tachado ARS</Label>
                     <Input
-                      id="price_usd"
-                      name="price_usd"
+                      id="price_compare_ars"
+                      name="price_compare_ars"
                       type="number"
                       min="0"
                       step="0.01"
-                      defaultValue={course.price_usd || ""}
+                      defaultValue={course.price_compare_ars || ""}
+                      placeholder="Precio anterior"
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price_usd">Precio USD (opcional)</Label>
+                  <Input
+                    id="price_usd"
+                    name="price_usd"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={course.price_usd || ""}
+                  />
                 </div>
                 <Button type="submit" disabled={saving}>
                   {saving ? "Guardando..." : "Guardar cambios"}

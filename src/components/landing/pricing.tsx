@@ -4,6 +4,7 @@ import { Checkout } from "./checkout"
 
 interface PricingProps {
   priceArs: number
+  priceCompareArs: number | null
   priceUsd: number | null
   installmentsMax: number
   ctaText: string
@@ -14,6 +15,7 @@ interface PricingProps {
 
 export function LandingPricing({
   priceArs,
+  priceCompareArs,
   priceUsd,
   installmentsMax,
   ctaText,
@@ -30,6 +32,11 @@ export function LandingPricing({
           <CardContent className="pt-8 pb-8 text-center">
             <Badge className="mb-6 font-mono text-xs">ACCESO DE POR VIDA</Badge>
 
+            {priceCompareArs && (
+              <p className="text-muted-foreground line-through text-lg mb-1">
+                ${priceCompareArs.toLocaleString("es-AR")}
+              </p>
+            )}
             <div className="mb-2">
               <span className="font-display text-5xl tabular-nums">
                 ${priceArs.toLocaleString("es-AR")}

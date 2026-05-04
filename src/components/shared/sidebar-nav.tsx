@@ -7,6 +7,7 @@ import {
   DollarSign,
   GraduationCap,
   LogOut,
+  Settings,
   User,
 } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
@@ -18,6 +19,7 @@ const creatorLinks = [
   { href: "/creador/cursos", label: "Mis cursos", icon: BookOpen },
   { href: "/creador/ventas", label: "Ventas", icon: DollarSign },
   { href: "/perfil", label: "Mi perfil", icon: User },
+  { href: "/creador/configuracion", label: "Configuración", icon: Settings },
 ]
 
 const studentLinks = [

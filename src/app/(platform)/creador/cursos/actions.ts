@@ -71,6 +71,9 @@ export async function updateCourse(courseId: string, formData: FormData) {
   const priceUsd = formData.get("price_usd")
     ? parseFloat(formData.get("price_usd") as string)
     : null
+  const priceCompareArs = formData.get("price_compare_ars")
+    ? parseFloat(formData.get("price_compare_ars") as string)
+    : null
 
   const { error } = await supabase
     .from("courses")
@@ -78,6 +81,7 @@ export async function updateCourse(courseId: string, formData: FormData) {
       title,
       description_long: description,
       price_ars: priceArs,
+      price_compare_ars: priceCompareArs,
       price_usd: priceUsd,
     })
     .eq("id", courseId)

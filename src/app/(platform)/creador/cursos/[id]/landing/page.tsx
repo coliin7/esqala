@@ -14,6 +14,9 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { Plus, Trash2, ExternalLink, Star, GripVertical } from "lucide-react"
 import type { Course, Testimonial } from "@/types"
+import { VideoUpload } from "@/components/creator/video-upload"
+
+type HeroVideoSource = "upload" | "url"
 
 // ── Reusable editable list ─────────────────────────────────────────────────
 
@@ -133,6 +136,8 @@ export default function LandingEditorPage() {
   const [headline, setHeadline] = useState("")
   const [subheadline, setSubheadline] = useState("")
   const [heroVideoUrl, setHeroVideoUrl] = useState("")
+  const [heroVideoSource, setHeroVideoSource] = useState<HeroVideoSource>("url")
+  const [heroBunnyId, setHeroBunnyId] = useState<string | null>(null)
   const [descriptionLong, setDescriptionLong] = useState("")
   const [learningOutcomes, setLearningOutcomes] = useState<string[]>([])
   const [targetAudience, setTargetAudience] = useState<string[]>([])
@@ -157,6 +162,16 @@ export default function LandingEditorPage() {
       setHeadline(c.headline || c.title)
       setSubheadline(c.subheadline || "")
       setHeroVideoUrl(c.hero_video_url || "")
+      // Detect if existing URL is a Bunny embed to restore upload state
+      const isBunnyEmbed = c.hero_video_url?.includes("/embed/")
+      if (isBunnyEmbed && c.hero_video_url) {
+        setHeroVideoSource("upload")
+        const parts = c.hero_video_url.split("/")
+        setHeroBunnyId(parts[parts.length - 1] || null)
+      } else {
+        setHeroVideoSource("url")
+        setHeroBunnyId(null)
+      }
       setDescriptionLong(c.description_long || "")
       setLearningOutcomes(c.learning_outcomes || [])
       setTargetAudience(c.target_audience || [])
@@ -215,15 +230,13 @@ export default function LandingEditorPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Editor de landing</h1>
         <div className="flex gap-2">
-          {course.status === "published" && (
-            <Button
-              variant="outline"
-              render={<Link href={`/c/${course.slug}`} target="_blank" />}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ver landing
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            render={<Link href={`/c/${course.slug}`} target="_blank" />}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            {course.status === "published" ? "Ver landing" : "Previsualizar"}
+          </Button>
           <Button variant="outline" render={<Link href={`/creador/cursos/${courseId}`} />}>
             Volver
           </Button>
@@ -254,15 +267,58 @@ export default function LandingEditorPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>URL del video de presentación</Label>
-              <Input
-                value={heroVideoUrl}
-                onChange={(e) => setHeroVideoUrl(e.target.value)}
-                placeholder="https://youtube.com/embed/... o https://vimeo.com/..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Pegá la URL de embed de YouTube o Vimeo
-              </p>
+              <Label>Video de presentación</Label>
+              <div className="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                <button
+                  type="button"
+                  onClick={() => setHeroVideoSource("upload")}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    heroVideoSource === "upload"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Subir video
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroVideoSource("url")}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    heroVideoSource === "url"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  URL externa
+                </button>
+              </div>
+
+              {heroVideoSource === "upload" && (
+                <VideoUpload
+                  lessonId={courseId}
+                  currentVideoId={heroBunnyId}
+                  onUploaded={(videoId) => {
+                    setHeroBunnyId(videoId)
+                    const hostname =
+                      process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || "iframe.mediadelivery.net"
+                    const library = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
+                    setHeroVideoUrl(`https://${hostname}/embed/${library}/${videoId}`)
+                  }}
+                />
+              )}
+
+              {heroVideoSource === "url" && (
+                <>
+                  <Input
+                    value={heroVideoUrl}
+                    onChange={(e) => setHeroVideoUrl(e.target.value)}
+                    placeholder="https://youtube.com/embed/... o https://vimeo.com/..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Pegá la URL de embed de YouTube o Vimeo
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

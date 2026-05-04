@@ -119,6 +119,21 @@ export async function updateLesson(
   return { success: true }
 }
 
+export async function updateWelcomeVideo(courseId: string, videoBunnyId: string | null) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ welcome_video_bunny_id: videoBunnyId })
+    .eq("id", courseId)
+    .eq("creator_id", user.id)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 export async function deleteLesson(lessonId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

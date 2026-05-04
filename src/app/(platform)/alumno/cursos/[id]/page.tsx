@@ -24,6 +24,7 @@ export default function CursoPlayerPage() {
   const [course, setCourse] = useState<Course | null>(null)
   const [modules, setModules] = useState<ModuleWithLessons[]>([])
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null)
+  const [showingWelcome, setShowingWelcome] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
@@ -74,12 +75,18 @@ export default function CursoPlayerPage() {
       setCompletedLessons(new Set(progressRes.data.map((p) => p.lesson_id)))
     }
 
-    // Set first incomplete lesson or first lesson
+    // Set first incomplete lesson or first lesson; show welcome if no progress yet
     const allLessons = m.flatMap((mod) => mod.lessons)
-    const firstIncomplete = allLessons.find(
-      (l) => !progressRes.data?.some((p) => p.lesson_id === l.id)
-    )
-    setCurrentLesson(firstIncomplete || allLessons[0] || null)
+    const hasProgress = progressRes.data && progressRes.data.length > 0
+
+    if (c?.welcome_video_bunny_id && !hasProgress) {
+      setShowingWelcome(true)
+    } else {
+      const firstIncomplete = allLessons.find(
+        (l) => !progressRes.data?.some((p) => p.lesson_id === l.id)
+      )
+      setCurrentLesson(firstIncomplete || allLessons[0] || null)
+    }
 
     setLoading(false)
   }, [courseId])
@@ -120,11 +127,23 @@ export default function CursoPlayerPage() {
 
   const bunnyHostname = process.env.NEXT_PUBLIC_BUNNY_CDN_HOSTNAME || "iframe.mediadelivery.net"
   const bunnyLibrary = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
-  const videoUrl = currentLesson?.video_bunny_id
+
+  const videoUrl = showingWelcome && course?.welcome_video_bunny_id
+    ? `https://${bunnyHostname}/embed/${bunnyLibrary}/${course.welcome_video_bunny_id}`
+    : currentLesson?.video_bunny_id
     ? `https://${bunnyHostname}/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
     : currentLesson?.video_drive_id
     ? `https://drive.google.com/file/d/${currentLesson.video_drive_id}/preview`
     : null
+
+  // Navigation helpers accounting for welcome video
+  const effectivePrev = showingWelcome
+    ? null
+    : currentIndex === 0 && course?.welcome_video_bunny_id
+    ? "welcome" as const
+    : prevLesson
+
+  const effectiveNext = showingWelcome ? allLessons[0] || null : nextLesson
 
   function LessonList() {
     return (
@@ -142,18 +161,29 @@ export default function CursoPlayerPage() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
+          {course?.welcome_video_bunny_id && (
+            <button
+              onClick={() => { setShowingWelcome(true); setCurrentLesson(null) }}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent ${
+                showingWelcome ? "bg-accent text-accent-foreground" : ""
+              }`}
+            >
+              <PlayCircle className={`h-4 w-4 shrink-0 ${showingWelcome ? "text-primary" : ""}`} />
+              <span className="flex-1">Bienvenida</span>
+            </button>
+          )}
           {modules.map((module, idx) => (
             <div key={module.id}>
               <div className="px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground sticky top-0">
                 Módulo {idx + 1}: {module.title}
               </div>
               {module.lessons.map((lesson) => {
-                const isActive = currentLesson?.id === lesson.id
+                const isActive = !showingWelcome && currentLesson?.id === lesson.id
                 const isCompleted = completedLessons.has(lesson.id)
                 return (
                   <button
                     key={lesson.id}
-                    onClick={() => setCurrentLesson(lesson)}
+                    onClick={() => { setShowingWelcome(false); setCurrentLesson(lesson) }}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent ${
                       isActive ? "bg-accent text-accent-foreground" : ""
                     }`}
@@ -202,11 +232,11 @@ export default function CursoPlayerPage() {
             </SheetContent>
           </Sheet>
           <span className="text-sm font-medium truncate flex-1">
-            {currentLesson?.title}
+            {showingWelcome ? "Bienvenida" : currentLesson?.title}
           </span>
         </div>
 
-        {currentLesson ? (
+        {showingWelcome || currentLesson ? (
           <>
             {/* Video */}
             <div className="aspect-video bg-black shrink-0">
@@ -216,7 +246,7 @@ export default function CursoPlayerPage() {
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  title={currentLesson.title}
+                  title={showingWelcome ? "Bienvenida" : currentLesson!.title}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/50">
@@ -225,11 +255,13 @@ export default function CursoPlayerPage() {
               )}
             </div>
 
-            {/* Lesson info */}
+            {/* Content info */}
             <div className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
-                <h1 className="text-xl font-bold">{currentLesson.title}</h1>
-                {!completedLessons.has(currentLesson.id) && (
+                <h1 className="text-xl font-bold">
+                  {showingWelcome ? "Bienvenida" : currentLesson!.title}
+                </h1>
+                {!showingWelcome && currentLesson && !completedLessons.has(currentLesson.id) && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -239,7 +271,7 @@ export default function CursoPlayerPage() {
                     Completar
                   </Button>
                 )}
-                {completedLessons.has(currentLesson.id) && (
+                {!showingWelcome && currentLesson && completedLessons.has(currentLesson.id) && (
                   <Badge variant="secondary" className="gap-1">
                     <CheckCircle2 className="h-3 w-3" />
                     Completada
@@ -248,7 +280,8 @@ export default function CursoPlayerPage() {
               </div>
 
               {/* Materials */}
-              {currentLesson.materials && (currentLesson.materials as unknown[]).length > 0 && (
+              {!showingWelcome && currentLesson?.materials &&
+                (currentLesson.materials as unknown[]).length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-2">Materiales</h3>
                   <div className="space-y-2">
@@ -275,19 +308,30 @@ export default function CursoPlayerPage() {
               <div className="flex justify-between pt-4 border-t">
                 <Button
                   variant="outline"
-                  disabled={!prevLesson}
-                  onClick={() => prevLesson && setCurrentLesson(prevLesson)}
+                  disabled={effectivePrev === null}
+                  onClick={() => {
+                    if (effectivePrev === "welcome") {
+                      setShowingWelcome(true)
+                      setCurrentLesson(null)
+                    } else if (effectivePrev) {
+                      setShowingWelcome(false)
+                      setCurrentLesson(effectivePrev)
+                    }
+                  }}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Anterior
                 </Button>
                 <Button
-                  disabled={!nextLesson}
+                  disabled={!effectiveNext}
                   onClick={() => {
-                    if (!completedLessons.has(currentLesson.id)) {
+                    if (!showingWelcome && currentLesson && !completedLessons.has(currentLesson.id)) {
                       markComplete(currentLesson.id)
                     }
-                    if (nextLesson) setCurrentLesson(nextLesson)
+                    if (effectiveNext) {
+                      setShowingWelcome(false)
+                      setCurrentLesson(effectiveNext)
+                    }
                   }}
                 >
                   Siguiente

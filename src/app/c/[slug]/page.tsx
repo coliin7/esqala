@@ -13,8 +13,6 @@ import { LandingNavbar } from "@/components/landing/navbar"
 import { StickyCTA } from "@/components/landing/sticky-cta"
 import type { Course, CourseModule, Lesson, Testimonial, Profile } from "@/types"
 
-export const revalidate = 60
-
 interface PageProps {
   params: Promise<{ slug: string }>
 }
@@ -59,10 +57,17 @@ export default async function CourseLandingPage({ params }: PageProps) {
       testimonials(*)
     `)
     .eq("slug", slug)
-    .eq("status", "published")
     .single()
 
   if (!course) notFound()
+
+  // Draft courses are only visible to the creator
+  const isDraft = course.status !== "published"
+  if (isDraft) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const typedCreator = course.creator as unknown as Profile
+    if (!user || user.id !== typedCreator.id) notFound()
+  }
 
   const typedCourse = course as unknown as Course & {
     creator: Profile
@@ -109,6 +114,11 @@ export default async function CourseLandingPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {isDraft && (
+        <div className="sticky top-0 z-50 bg-yellow-400 text-yellow-900 text-center text-sm font-medium py-2 px-4">
+          Modo previsualización — este curso aún no está publicado
+        </div>
+      )}
       <div className="min-h-screen bg-background">
         <LandingNavbar ctaText={typedCourse.cta_text} />
         <LandingHero
@@ -117,6 +127,7 @@ export default async function CourseLandingPage({ params }: PageProps) {
           heroVideoUrl={typedCourse.hero_video_url}
           ctaText={typedCourse.cta_text}
           priceArs={typedCourse.price_ars}
+          priceCompareArs={typedCourse.price_compare_ars ?? null}
           installmentsMax={typedCourse.installments_max}
           courseId={typedCourse.id}
           slug={slug}
@@ -157,6 +168,7 @@ export default async function CourseLandingPage({ params }: PageProps) {
 
         <LandingPricing
           priceArs={typedCourse.price_ars}
+          priceCompareArs={typedCourse.price_compare_ars ?? null}
           priceUsd={typedCourse.price_usd}
           installmentsMax={typedCourse.installments_max}
           ctaText={typedCourse.cta_text}
