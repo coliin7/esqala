@@ -128,9 +128,9 @@ export default function CursoPlayerPage() {
   const bunnyLibrary = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
 
   const videoUrl = showingWelcome && course?.welcome_video_bunny_id
-    ? `https://iframe.mediadelivery.net/embed/${bunnyLibrary}/${course.welcome_video_bunny_id}`
+    ? `https://player.mediadelivery.net/embed/${bunnyLibrary}/${course.welcome_video_bunny_id}`
     : currentLesson?.video_bunny_id
-    ? `https://iframe.mediadelivery.net/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
+    ? `https://player.mediadelivery.net/embed/${bunnyLibrary}/${currentLesson.video_bunny_id}`
     : currentLesson?.video_drive_id
     ? `https://drive.google.com/file/d/${currentLesson.video_drive_id}/preview`
     : null

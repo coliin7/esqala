@@ -305,7 +305,7 @@ export default function LandingEditorPage() {
                   onUploaded={(videoId) => {
                     setHeroBunnyId(videoId)
                     const library = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || ""
-                    setHeroVideoUrl(`https://iframe.mediadelivery.net/embed/${library}/${videoId}`)
+                    setHeroVideoUrl(`https://player.mediadelivery.net/embed/${library}/${videoId}`)
                   }}
                 />
               )}
