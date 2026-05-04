@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { Plus, Trash2, GripVertical, Video, FileText, Eye, ChevronDown, ChevronUp } from "lucide-react"
 import type { CourseModule, Lesson } from "@/types"
 import Link from "next/link"
+import { VideoUpload } from "@/components/creator/video-upload"
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,6 @@ function LessonRow({
   const [videoSource, setVideoSource] = useState<VideoSource>(
     lesson.video_drive_id ? "drive" : "bunny"
   )
-  const [bunnyId, setBunnyId] = useState(lesson.video_bunny_id || "")
   const [driveInput, setDriveInput] = useState(
     lesson.video_drive_id
       ? `https://drive.google.com/file/d/${lesson.video_drive_id}/view`
@@ -77,13 +77,11 @@ function LessonRow({
   async function handleSave() {
     setSaving(true)
     const data: Partial<Lesson> = { title: title.trim() || lesson.title }
-    if (videoSource === "bunny") {
-      data.video_bunny_id = bunnyId.trim() || null
-      data.video_drive_id = null
-    } else {
+    if (videoSource === "drive") {
       data.video_drive_id = driveFileId || null
       data.video_bunny_id = null
     }
+    // Bunny video is auto-saved on upload — no need to include here
     await onUpdate(data)
     setSaving(false)
     setExpanded(false)
@@ -92,7 +90,6 @@ function LessonRow({
   function handleCancel() {
     setTitle(lesson.title)
     setVideoSource(lesson.video_drive_id ? "drive" : "bunny")
-    setBunnyId(lesson.video_bunny_id || "")
     setDriveInput(
       lesson.video_drive_id
         ? `https://drive.google.com/file/d/${lesson.video_drive_id}/view`
@@ -195,14 +192,13 @@ function LessonRow({
             </div>
 
             {videoSource === "bunny" && (
-              <div className="space-y-1">
-                <Input
-                  value={bunnyId}
-                  onChange={(e) => setBunnyId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className="h-8 text-sm font-mono"
-                />
-              </div>
+              <VideoUpload
+                lessonId={lesson.id}
+                currentVideoId={lesson.video_bunny_id}
+                onUploaded={async (videoId) => {
+                  await onUpdate({ video_bunny_id: videoId, video_drive_id: null })
+                }}
+              />
             )}
 
             {videoSource === "drive" && (
