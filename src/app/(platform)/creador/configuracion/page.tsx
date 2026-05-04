@@ -105,8 +105,8 @@ function ConfiguracionContent() {
                 {disconnecting ? "Desvinculando..." : "Desvincular"}
               </Button>
             ) : (
-              <Button size="sm" asChild>
-                <a href="/api/mp/connect">Vincular cuenta</a>
+              <Button size="sm" render={<a href="/api/mp/connect" />}>
+                Vincular cuenta
               </Button>
             )}
           </div>
